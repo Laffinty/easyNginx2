@@ -128,64 +128,66 @@ impl SiteListPanel {
                         ui.set_height(row_height);
                         ui.spacing_mut().item_spacing.x = spacing;
 
-                        for (i, col) in col_widths.iter().enumerate() {
-                            let w = col.unwrap_or(dynamic_width);
+                        ui.horizontal(|ui| {
+                            for (i, col) in col_widths.iter().enumerate() {
+                                let w = col.unwrap_or(dynamic_width);
 
-                            match i {
-                                // site
-                                0 => {
-                                    ui.add_sized(
-                                        egui::vec2(w, row_height),
-                                        egui::SelectableLabel::new(selected, &site),
-                                    );
+                                match i {
+                                    // site
+                                    0 => {
+                                        ui.add_sized(
+                                            egui::vec2(w, row_height),
+                                            egui::SelectableLabel::new(selected, &site),
+                                        );
+                                    }
+
+                                    // type（不换行）
+                                    1 => {
+                                        ui.add_sized(
+                                            egui::vec2(w, row_height),
+                                            egui::Label::new(&ty).wrap_mode(egui::TextWrapMode::Extend),
+                                        )
+                                        .on_hover_text(&ty);
+                                    }
+
+                                    // port（不换行）
+                                    2 => {
+                                        let text = if https && redirect {
+                                            format!("{}/80({})", port, redirect_text)
+                                        } else {
+                                            port.clone()
+                                        };
+                                        ui.add_sized(
+                                            egui::vec2(w, row_height),
+                                            egui::Label::new(text).wrap_mode(egui::TextWrapMode::Extend),
+                                        );
+                                    }
+
+                                    // domain（✅ 允许换行）
+                                    3 => {
+                                        ui.add_sized(
+                                            egui::vec2(w, row_height),
+                                            egui::Label::new(&domain).wrap_mode(egui::TextWrapMode::Wrap),
+                                        )
+                                        .on_hover_text(&domain);
+                                    }
+
+                                    // https（不换行）
+                                    4 => {
+                                        ui.add_sized(
+                                            egui::vec2(w, row_height),
+                                            egui::Label::new(if https { &yes_text } else { &no_text })
+                                                .wrap_mode(egui::TextWrapMode::Extend),
+                                        );
+                                    }
+                                    _ => {}
                                 }
 
-                                // type（不换行）
-                                1 => {
-                                    ui.add_sized(
-                                        egui::vec2(w, row_height),
-                                        egui::Label::new(&ty).wrap_mode(egui::TextWrapMode::Extend),
-                                    )
-                                    .on_hover_text(&ty);
+                                if i + 1 < col_widths.len() {
+                                    ui.add_space(spacing);
                                 }
-
-                                // port（不换行）
-                                2 => {
-                                    let text = if https && redirect {
-                                        format!("{}/80({})", port, redirect_text)
-                                    } else {
-                                        port.clone()
-                                    };
-                                    ui.add_sized(
-                                        egui::vec2(w, row_height),
-                                        egui::Label::new(text).wrap_mode(egui::TextWrapMode::Extend),
-                                    );
-                                }
-
-                                // domain（✅ 允许换行）
-                                3 => {
-                                    ui.add_sized(
-                                        egui::vec2(w, row_height),
-                                        egui::Label::new(&domain).wrap_mode(egui::TextWrapMode::Wrap),
-                                    )
-                                    .on_hover_text(&domain);
-                                }
-
-                                // https（不换行）
-                                4 => {
-                                    ui.add_sized(
-                                        egui::vec2(w, row_height),
-                                        egui::Label::new(if https { &yes_text } else { &no_text })
-                                            .wrap_mode(egui::TextWrapMode::Extend),
-                                    );
-                                }
-                                _ => {}
                             }
-
-                            if i + 1 < col_widths.len() {
-                                ui.add_space(spacing);
-                            }
-                        }
+                        });
                     });
 
                     // ===== 行级事件 =====
