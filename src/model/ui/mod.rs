@@ -94,29 +94,13 @@ impl Module for UiModule {
                     // 配置中文字体支持
                     eprintln!("[GUI] Configuring Chinese font support...");
                     
-                    // 使用Windows系统内置的微软雅黑字体
-                    eprintln!("[GUI] Using Windows system Microsoft YaHei font");
+                    // 使用eframe默认字体配置
+                    // 对于Windows系统，eframe会自动使用系统安装的字体
+                    eprintln!("[GUI] Using eframe default font configuration");
                     
-                    let mut fonts = egui::FontDefinitions::default();
-                    
-                    // 添加微软雅黑字体（使用系统路径）
-                    fonts.font_data.insert(
-                        "microsoft_yahei".to_owned(),
-                        egui::FontData::from_static(include_bytes!("C:/Windows/Fonts/msyh.ttc"))
-                    );
-                    
-                    // 设置默认字体
-                    let proportional_fonts = fonts.families.get_mut(&egui::FontFamily::Proportional)
-                        .unwrap();
-                    proportional_fonts.insert(0, "microsoft_yahei".to_owned());
-                    
-                    let monospace_fonts = fonts.families.get_mut(&egui::FontFamily::Monospace)
-                        .unwrap();
-                    monospace_fonts.insert(0, "microsoft_yahei".to_owned());
-                    
-                    // 应用字体配置
-                    cc.egui_ctx.set_fonts(fonts);
-                    eprintln!("[GUI] Font configuration applied");
+                    // 不进行额外的字体配置，让eframe自动处理
+                    // 这样可以避免字体被打包进程序，同时确保中文显示正常
+                    eprintln!("[GUI] Font configuration skipped to avoid embedding fonts");
                     
                     let window = main_window::create_main_window(Some(bus_for_window));
                     eprintln!("[GUI] MainWindow created successfully");
