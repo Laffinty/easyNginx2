@@ -67,7 +67,7 @@ impl Module for UiModule {
             let mut native_options = eframe::NativeOptions {
                 viewport: egui::ViewportBuilder::default()
                     .with_title("easyNginx Test")
-                    .with_inner_size([400.0, 300.0])
+                    .with_inner_size([1000.0, 700.0])
                     .with_resizable(true),
                 ..Default::default()
             };
@@ -90,6 +90,34 @@ impl Module for UiModule {
                 native_options,
                 Box::new(|cc| {
                     eprintln!("[GUI] Creating MainWindow instance...");
+                    
+                    // 配置中文字体支持
+                    eprintln!("[GUI] Configuring Chinese font support...");
+                    
+                    // 使用指定的阿里巴巴普惠体字体
+                    eprintln!("[GUI] Using Alibaba PuHuiTi font");
+                    
+                    let mut fonts = egui::FontDefinitions::default();
+                    
+                    // 添加阿里巴巴普惠体字体
+                    fonts.font_data.insert(
+                        "alibaba_puhuiti".to_owned(),
+                        egui::FontData::from_static(include_bytes!("../../../assets/fonts/AlibabaPuHuiTi-3-65-Medium.otf"))
+                    );
+                    
+                    // 设置默认字体
+                    let proportional_fonts = fonts.families.get_mut(&egui::FontFamily::Proportional)
+                        .unwrap();
+                    proportional_fonts.insert(0, "alibaba_puhuiti".to_owned());
+                    
+                    let monospace_fonts = fonts.families.get_mut(&egui::FontFamily::Monospace)
+                        .unwrap();
+                    monospace_fonts.insert(0, "alibaba_puhuiti".to_owned());
+                    
+                    // 应用字体配置
+                    cc.egui_ctx.set_fonts(fonts);
+                    eprintln!("[GUI] Font configuration applied");
+                    
                     let window = main_window::create_main_window(Some(bus_for_window));
                     eprintln!("[GUI] MainWindow created successfully");
                     window

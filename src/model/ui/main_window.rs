@@ -524,5 +524,8 @@ impl MainWindow {
 }
 
 pub fn create_main_window(bus: Option<Arc<MessageBus>>) -> Box<dyn eframe::App> {
-    Box::new(MainWindow::new(bus))
+    // 创建应用实例
+    let window = MainWindow::new(bus);
+    
+    Box::new(window)
 }
