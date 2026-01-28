@@ -94,25 +94,25 @@ impl Module for UiModule {
                     // 配置中文字体支持
                     eprintln!("[GUI] Configuring Chinese font support...");
                     
-                    // 使用指定的阿里巴巴普惠体字体
-                    eprintln!("[GUI] Using Alibaba PuHuiTi font");
+                    // 使用Windows系统内置的微软雅黑字体
+                    eprintln!("[GUI] Using Windows system Microsoft YaHei font");
                     
                     let mut fonts = egui::FontDefinitions::default();
                     
-                    // 添加阿里巴巴普惠体字体
+                    // 添加微软雅黑字体（使用系统路径）
                     fonts.font_data.insert(
-                        "alibaba_puhuiti".to_owned(),
-                        egui::FontData::from_static(include_bytes!("../../../assets/fonts/AlibabaPuHuiTi-3-65-Medium.otf"))
+                        "microsoft_yahei".to_owned(),
+                        egui::FontData::from_static(include_bytes!("C:/Windows/Fonts/msyh.ttc"))
                     );
                     
                     // 设置默认字体
                     let proportional_fonts = fonts.families.get_mut(&egui::FontFamily::Proportional)
                         .unwrap();
-                    proportional_fonts.insert(0, "alibaba_puhuiti".to_owned());
+                    proportional_fonts.insert(0, "microsoft_yahei".to_owned());
                     
                     let monospace_fonts = fonts.families.get_mut(&egui::FontFamily::Monospace)
                         .unwrap();
-                    monospace_fonts.insert(0, "alibaba_puhuiti".to_owned());
+                    monospace_fonts.insert(0, "microsoft_yahei".to_owned());
                     
                     // 应用字体配置
                     cc.egui_ctx.set_fonts(fonts);
