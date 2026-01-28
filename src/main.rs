@@ -53,9 +53,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 // 注意：需要创建 src/model/mod.rs 文件来声明 ui 子模块
 // 或者使用内联方式声明模块
 
-pub mod model {
-    pub mod ui;
-}
+pub mod model;
 
 // ==============================================================================
 // INVENTORY-BASED AUTO-REGISTRATION SYSTEM

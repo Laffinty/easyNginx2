@@ -15,10 +15,4 @@ winit = "0.29.15"
 [target.'cfg(windows)'.dependencies]
 windows = "0.51.1"
 
-[[bin]]
-name = "test_gui"
-path = "test_gui.rs"
 
-[[bin]]
-name = "test_winit"
-path = "test_winit.rs"

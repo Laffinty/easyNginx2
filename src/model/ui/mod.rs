@@ -84,14 +84,15 @@ impl Module for UiModule {
             eprintln!("[GUI] Calling eframe::run_native...");
             
             // Use the original MainWindow
+            let bus_for_window = bus_for_exit.clone();
             let result = eframe::run_native(
                 "easyNginx",
                 native_options,
                 Box::new(|cc| {
                     eprintln!("[GUI] Creating MainWindow instance...");
-                    let window = main_window::MainWindow::new();
+                    let window = main_window::create_main_window(Some(bus_for_window));
                     eprintln!("[GUI] MainWindow created successfully");
-                    Box::new(window)
+                    window
                 }),
             );
             
