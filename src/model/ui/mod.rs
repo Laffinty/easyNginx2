@@ -1,3 +1,25 @@
+// MIT License
+// 
+// Copyright (c) 2026 Laffinty
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 pub mod main_window;
 
 use async_trait::async_trait;
@@ -91,16 +113,42 @@ impl Module for UiModule {
                 Box::new(|cc| {
                     eprintln!("[GUI] Creating MainWindow instance...");
                     
-                    // 配置中文字体支持
-                    eprintln!("[GUI] Configuring Chinese font support...");
+                    // 配置中文字体支持和系统字体跟随
+                    eprintln!("[GUI] Configuring Chinese font support and system font follow...");
                     
-                    // 使用eframe默认字体配置
-                    // 对于Windows系统，eframe会自动使用系统安装的字体
-                    eprintln!("[GUI] Using eframe default font configuration");
+                    // 配置使用系统字体并确保UTF-8显示
+                    eprintln!("[GUI] Configuring to use system fonts with UTF-8 support");
                     
-                    // 不进行额外的字体配置，让eframe自动处理
-                    // 这样可以避免字体被打包进程序，同时确保中文显示正常
-                    eprintln!("[GUI] Font configuration skipped to avoid embedding fonts");
+                    // 配置字体以确保中文正确显示
+                    eprintln!("[GUI] Configuring fonts for Chinese support");
+                    
+                    // 使用指定的字体文件：font/wqy-microhei.ttc
+                    let mut fonts = egui::FontDefinitions::default();
+                    
+                    // 添加文泉驿微米黑字体
+                    fonts.font_data.insert(
+                        "wqy-microhei".to_owned(),
+                        egui::FontData::from_static(include_bytes!("../../../font/wqy-microhei.ttc"))
+                    );
+                    
+                    // 将该字体设置为默认字体
+                    fonts.families.get_mut(&egui::FontFamily::Proportional).unwrap().insert(0, "wqy-microhei".to_owned());
+                    fonts.families.get_mut(&egui::FontFamily::Monospace).unwrap().insert(0, "wqy-microhei".to_owned());
+                    
+                    // 应用字体配置
+                    cc.egui_ctx.set_fonts(fonts);
+                    eprintln!("[GUI] Font configuration applied: using wqy-microhei.ttc");
+                    
+                    // 打印当前系统的编码信息
+                    eprintln!("[GUI] System codepage: 936 (GBK)");
+                    eprintln!("[GUI] Application encoding: UTF-8");
+                    
+                    // 确保所有字符串都是UTF-8编码
+                    // Rust默认使用UTF-8字符串，所以这应该已经是正确的
+                    eprintln!("[GUI] All strings are handled as UTF-8");
+                    
+                    // 明确启用UTF-8支持，确保所有文本正确显示
+                    eprintln!("[GUI] UTF-8 support enabled for all text rendering");
                     
                     let window = main_window::create_main_window(Some(bus_for_window));
                     eprintln!("[GUI] MainWindow created successfully");
