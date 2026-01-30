@@ -30,12 +30,18 @@ use std::any::TypeId;
 use tokio::sync::RwLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 use eframe::egui;
+use std::collections::HashMap;
+use crate::model::l18n::{BatchTranslationResponse, TranslationResponse, Language};
 
 #[derive(Clone)]
 pub struct UiModule {
     name: &'static str,
     bus: Arc<RwLock<Option<Arc<MessageBus>>>>,
     is_running: Arc<AtomicBool>,
+    /// 共享的翻译缓存 - 供 MainWindow 读取，UiModule 写入
+    translation_cache: Arc<RwLock<HashMap<String, String>>>,
+    /// 当前语言
+    current_language: Arc<RwLock<Language>>,
 }
 
 impl UiModule {
@@ -44,6 +50,8 @@ impl UiModule {
             name: "ui",
             bus: Arc::new(RwLock::new(None)),
             is_running: Arc::new(AtomicBool::new(false)),
+            translation_cache: Arc::new(RwLock::new(HashMap::new())),
+            current_language: Arc::new(RwLock::new(Language::ChineseSimplified)),
         }
     }
 }
@@ -65,12 +73,21 @@ impl Module for UiModule {
         
         *self.bus.write().await = Some(bus.clone());
         
+        // 注册翻译响应消息类型并订阅
+        let batch_response_type = bus.register_message_type::<BatchTranslationResponse>().await;
+        let translation_response_type = bus.register_message_type::<TranslationResponse>().await;
+        bus.subscribe(batch_response_type, self.name().to_string()).await;
+        bus.subscribe(translation_response_type, self.name().to_string()).await;
+        
         let is_running = self.is_running.clone();
+        let translation_cache = self.translation_cache.clone();
+        let current_language = self.current_language.clone();
         
         eprintln!("[UI Module] Starting GUI in spawn_blocking...");
         self.is_running.store(true, Ordering::SeqCst);
         
         let bus_for_exit = bus.clone();
+        let _bus_for_window = bus.clone();
         
         // Test if we can create a simple window without eframe first
         eprintln!("[UI Module] Testing basic console output...");
@@ -150,7 +167,11 @@ impl Module for UiModule {
                     // 明确启用UTF-8支持，确保所有文本正确显示
                     eprintln!("[GUI] UTF-8 support enabled for all text rendering");
                     
-                    let window = main_window::create_main_window(Some(bus_for_window));
+                    let window = main_window::create_main_window(
+                        Some(bus_for_window),
+                        translation_cache,
+                        current_language,
+                    );
                     eprintln!("[GUI] MainWindow created successfully");
                     window
                 }),
@@ -213,6 +234,26 @@ impl Module for UiModule {
         if envelope.message_type == TypeId::of::<crate::SystemMessage>() {
             if let Some(msg) = envelope.payload.as_any().downcast_ref::<crate::SystemMessage>() {
                 println!("[UI Module] Received system message: {} - {}", msg.source, msg.content);
+            }
+        } else if envelope.message_type == TypeId::of::<BatchTranslationResponse>() {
+            if let Some(response) = envelope.payload.as_any().downcast_ref::<BatchTranslationResponse>() {
+                if response.requester == "ui" {
+                    println!("[UI Module] Received batch translation response with {} entries", response.translations.len());
+                    // 更新共享缓存
+                    let mut cache = self.translation_cache.write().await;
+                    for (key, value) in &response.translations {
+                        cache.insert(key.clone(), value.clone());
+                    }
+                    // 更新当前语言
+                    let mut lang = self.current_language.write().await;
+                    *lang = response.language;
+                }
+            }
+        } else if envelope.message_type == TypeId::of::<TranslationResponse>() {
+            if let Some(response) = envelope.payload.as_any().downcast_ref::<TranslationResponse>() {
+                // 更新单个翻译到缓存
+                let mut cache = self.translation_cache.write().await;
+                cache.insert(response.key.clone(), response.translation.clone());
             }
         }
         

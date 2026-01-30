@@ -125,6 +125,70 @@ impl crate::Message for LanguageChangeRequest {
     }
 }
 
+/// 批量翻译请求 - 用于UI模块初始化时一次性获取多个翻译键
+#[derive(Clone, Debug)]
+pub struct BatchTranslationRequest {
+    pub keys: Vec<String>,
+    pub language: Language,
+    pub requester: String,  // 请求者模块名称，用于路由响应
+}
+
+impl BatchTranslationRequest {
+    pub fn new(keys: Vec<&str>, language: Language, requester: &str) -> Self {
+        Self {
+            keys: keys.iter().map(|&s| s.to_string()).collect(),
+            language,
+            requester: requester.to_string(),
+        }
+    }
+}
+
+impl crate::Message for BatchTranslationRequest {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    
+    fn message_type(&self) -> TypeId {
+        TypeId::of::<BatchTranslationRequest>()
+    }
+    
+    fn clone_box(&self) -> Box<dyn crate::Message> {
+        Box::new(self.clone())
+    }
+}
+
+/// 批量翻译响应 - 返回所有请求的翻译
+#[derive(Clone, Debug)]
+pub struct BatchTranslationResponse {
+    pub translations: HashMap<String, String>,
+    pub language: Language,
+    pub requester: String,
+}
+
+impl BatchTranslationResponse {
+    pub fn new(translations: HashMap<String, String>, language: Language, requester: &str) -> Self {
+        Self {
+            translations,
+            language,
+            requester: requester.to_string(),
+        }
+    }
+}
+
+impl crate::Message for BatchTranslationResponse {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    
+    fn message_type(&self) -> TypeId {
+        TypeId::of::<BatchTranslationResponse>()
+    }
+    
+    fn clone_box(&self) -> Box<dyn crate::Message> {
+        Box::new(self.clone())
+    }
+}
+
 pub struct I18nModule {
     name: &'static str,
     bus: Arc<RwLock<Option<Arc<MessageBus>>>>,
@@ -138,77 +202,127 @@ impl I18nModule {
     pub fn new() -> Self {
         let mut translations = HashMap::new();
         
-        // English translations
+        // ==================== English translations ====================
+        // Menu
         translations.insert(("menu_file".to_string(), Language::English), "File".to_string());
         translations.insert(("menu_operation".to_string(), Language::English), "Operation".to_string());
         translations.insert(("menu_language".to_string(), Language::English), "Language".to_string());
         translations.insert(("menu_help".to_string(), Language::English), "Help".to_string());
+        // File menu
         translations.insert(("menu_takeover_nginx".to_string(), Language::English), "Takeover Nginx".to_string());
         translations.insert(("menu_startup_on_boot".to_string(), Language::English), "Startup on Boot".to_string());
         translations.insert(("menu_new_proxy".to_string(), Language::English), "New Proxy".to_string());
         translations.insert(("menu_new_php".to_string(), Language::English), "New PHP".to_string());
         translations.insert(("menu_new_static".to_string(), Language::English), "New Static".to_string());
         translations.insert(("menu_exit".to_string(), Language::English), "Exit".to_string());
+        // Operation menu
         translations.insert(("menu_start_nginx".to_string(), Language::English), "Start Nginx".to_string());
         translations.insert(("menu_stop_nginx".to_string(), Language::English), "Stop Nginx".to_string());
         translations.insert(("menu_reload_config".to_string(), Language::English), "Reload Config".to_string());
         translations.insert(("menu_refresh_sites".to_string(), Language::English), "Refresh Sites".to_string());
         translations.insert(("menu_test_config".to_string(), Language::English), "Test Config".to_string());
         translations.insert(("menu_backup_config".to_string(), Language::English), "Backup Config".to_string());
+        // Language menu
         translations.insert(("menu_english".to_string(), Language::English), "English".to_string());
         translations.insert(("menu_chinese".to_string(), Language::English), "Chinese".to_string());
+        // Help menu
         translations.insert(("menu_about".to_string(), Language::English), "About".to_string());
+        
+        // Site list
         translations.insert(("site_list_site".to_string(), Language::English), "Site".to_string());
         translations.insert(("site_list_type".to_string(), Language::English), "Type".to_string());
         translations.insert(("site_list_port".to_string(), Language::English), "Port".to_string());
         translations.insert(("site_list_domain".to_string(), Language::English), "Domain".to_string());
         translations.insert(("site_list_https".to_string(), Language::English), "HTTPS".to_string());
+        translations.insert(("site_list_https_yes".to_string(), Language::English), "Yes".to_string());
+        translations.insert(("site_list_https_no".to_string(), Language::English), "No".to_string());
         translations.insert(("site_list_edit".to_string(), Language::English), "Edit".to_string());
         translations.insert(("site_list_delete".to_string(), Language::English), "Delete".to_string());
+        
+        // Status bar
         translations.insert(("status_nginx_stopped".to_string(), Language::English), "Nginx: Stopped".to_string());
         translations.insert(("status_nginx_running".to_string(), Language::English), "Nginx: Running".to_string());
         translations.insert(("status_sites".to_string(), Language::English), "Sites: Total {total}, Static {static}, PHP {php}, Proxy {proxy}".to_string());
+        
+        // About dialog
         translations.insert(("about_title".to_string(), Language::English), "About".to_string());
         translations.insert(("about_app_name".to_string(), Language::English), "easyNginx".to_string());
         translations.insert(("about_version".to_string(), Language::English), "Version 1.0.0".to_string());
-        translations.insert(("about_description".to_string(), Language::English), "A simple Nginx management tool".to_string());
+        translations.insert(("about_description".to_string(), Language::English), "A simple and intuitive Nginx management tool".to_string());
+        translations.insert(("about_author_label".to_string(), Language::English), "Author:".to_string());
+        translations.insert(("about_author".to_string(), Language::English), "Laffinty".to_string());
+        translations.insert(("about_license_label".to_string(), Language::English), "License:".to_string());
+        translations.insert(("about_license".to_string(), Language::English), "MIT License".to_string());
+        translations.insert(("about_website_label".to_string(), Language::English), "Website:".to_string());
+        translations.insert(("about_website".to_string(), Language::English), "GitHub".to_string());
+        translations.insert(("about_copyright".to_string(), Language::English), "© 2026 Laffinty. All rights reserved.".to_string());
         translations.insert(("about_ok".to_string(), Language::English), "OK".to_string());
         
-        // Chinese Simplified translations
+        // Site type
+        translations.insert(("site_type_static".to_string(), Language::English), "Static".to_string());
+        translations.insert(("site_type_php".to_string(), Language::English), "PHP".to_string());
+        translations.insert(("site_type_proxy".to_string(), Language::English), "Proxy".to_string());
+        
+        // ==================== Chinese Simplified translations ====================
+        // Menu
         translations.insert(("menu_file".to_string(), Language::ChineseSimplified), "文件".to_string());
         translations.insert(("menu_operation".to_string(), Language::ChineseSimplified), "操作".to_string());
         translations.insert(("menu_language".to_string(), Language::ChineseSimplified), "语言".to_string());
         translations.insert(("menu_help".to_string(), Language::ChineseSimplified), "帮助".to_string());
+        // File menu
         translations.insert(("menu_takeover_nginx".to_string(), Language::ChineseSimplified), "接管 Nginx".to_string());
         translations.insert(("menu_startup_on_boot".to_string(), Language::ChineseSimplified), "开机启动".to_string());
         translations.insert(("menu_new_proxy".to_string(), Language::ChineseSimplified), "新建代理".to_string());
         translations.insert(("menu_new_php".to_string(), Language::ChineseSimplified), "新建 PHP".to_string());
         translations.insert(("menu_new_static".to_string(), Language::ChineseSimplified), "新建静态".to_string());
         translations.insert(("menu_exit".to_string(), Language::ChineseSimplified), "退出".to_string());
+        // Operation menu
         translations.insert(("menu_start_nginx".to_string(), Language::ChineseSimplified), "启动 Nginx".to_string());
         translations.insert(("menu_stop_nginx".to_string(), Language::ChineseSimplified), "停止 Nginx".to_string());
         translations.insert(("menu_reload_config".to_string(), Language::ChineseSimplified), "重载配置".to_string());
         translations.insert(("menu_refresh_sites".to_string(), Language::ChineseSimplified), "刷新站点".to_string());
         translations.insert(("menu_test_config".to_string(), Language::ChineseSimplified), "测试配置".to_string());
         translations.insert(("menu_backup_config".to_string(), Language::ChineseSimplified), "备份配置".to_string());
+        // Language menu
         translations.insert(("menu_english".to_string(), Language::ChineseSimplified), "English".to_string());
         translations.insert(("menu_chinese".to_string(), Language::ChineseSimplified), "中文".to_string());
+        // Help menu
         translations.insert(("menu_about".to_string(), Language::ChineseSimplified), "关于".to_string());
+        
+        // Site list
         translations.insert(("site_list_site".to_string(), Language::ChineseSimplified), "站点".to_string());
         translations.insert(("site_list_type".to_string(), Language::ChineseSimplified), "类型".to_string());
         translations.insert(("site_list_port".to_string(), Language::ChineseSimplified), "端口".to_string());
         translations.insert(("site_list_domain".to_string(), Language::ChineseSimplified), "域名".to_string());
         translations.insert(("site_list_https".to_string(), Language::ChineseSimplified), "HTTPS".to_string());
+        translations.insert(("site_list_https_yes".to_string(), Language::ChineseSimplified), "是".to_string());
+        translations.insert(("site_list_https_no".to_string(), Language::ChineseSimplified), "否".to_string());
         translations.insert(("site_list_edit".to_string(), Language::ChineseSimplified), "编辑".to_string());
         translations.insert(("site_list_delete".to_string(), Language::ChineseSimplified), "删除".to_string());
+        
+        // Status bar
         translations.insert(("status_nginx_stopped".to_string(), Language::ChineseSimplified), "Nginx: 已停止".to_string());
         translations.insert(("status_nginx_running".to_string(), Language::ChineseSimplified), "Nginx: 运行中".to_string());
         translations.insert(("status_sites".to_string(), Language::ChineseSimplified), "站点: 总计 {total}, 静态 {static}, PHP {php}, 代理 {proxy}".to_string());
+        
+        // About dialog
         translations.insert(("about_title".to_string(), Language::ChineseSimplified), "关于".to_string());
         translations.insert(("about_app_name".to_string(), Language::ChineseSimplified), "easyNginx".to_string());
         translations.insert(("about_version".to_string(), Language::ChineseSimplified), "版本 1.0.0".to_string());
-        translations.insert(("about_description".to_string(), Language::ChineseSimplified), "简单的 Nginx 管理工具".to_string());
+        translations.insert(("about_description".to_string(), Language::ChineseSimplified), "简单直观的 Nginx 管理工具".to_string());
+        translations.insert(("about_author_label".to_string(), Language::ChineseSimplified), "作者：".to_string());
+        translations.insert(("about_author".to_string(), Language::ChineseSimplified), "Laffinty".to_string());
+        translations.insert(("about_license_label".to_string(), Language::ChineseSimplified), "许可证：".to_string());
+        translations.insert(("about_license".to_string(), Language::ChineseSimplified), "MIT 许可证".to_string());
+        translations.insert(("about_website_label".to_string(), Language::ChineseSimplified), "网站：".to_string());
+        translations.insert(("about_website".to_string(), Language::ChineseSimplified), "GitHub".to_string());
+        translations.insert(("about_copyright".to_string(), Language::ChineseSimplified), "© 2026 Laffinty. 保留所有权利。".to_string());
         translations.insert(("about_ok".to_string(), Language::ChineseSimplified), "确定".to_string());
+        
+        // Site type
+        translations.insert(("site_type_static".to_string(), Language::ChineseSimplified), "静态".to_string());
+        translations.insert(("site_type_php".to_string(), Language::ChineseSimplified), "PHP".to_string());
+        translations.insert(("site_type_proxy".to_string(), Language::ChineseSimplified), "代理".to_string());
         
         Self {
             name: "l18n",
@@ -259,10 +373,12 @@ impl Module for I18nModule {
         // Register message types
         let translation_request_type = bus.register_message_type::<TranslationRequest>().await;
         let language_change_request_type = bus.register_message_type::<LanguageChangeRequest>().await;
+        let batch_translation_request_type = bus.register_message_type::<BatchTranslationRequest>().await;
         
         // Subscribe to messages
         bus.subscribe(translation_request_type, self.name().to_string()).await;
         bus.subscribe(language_change_request_type, self.name().to_string()).await;
+        bus.subscribe(batch_translation_request_type, self.name().to_string()).await;
         
         Ok(())
     }
@@ -281,6 +397,19 @@ impl Module for I18nModule {
             if let Some(msg) = envelope.payload.as_any().downcast_ref::<LanguageChangeRequest>() {
                 self.set_language(msg.language).await;
                 println!("[I18n] Language changed to: {:?}", msg.language);
+            }
+        } else if envelope.message_type == TypeId::of::<BatchTranslationRequest>() {
+            if let Some(msg) = envelope.payload.as_any().downcast_ref::<BatchTranslationRequest>() {
+                let mut translations = HashMap::new();
+                for key in &msg.keys {
+                    let translation = self.translate(key, Some(msg.language)).await;
+                    translations.insert(key.clone(), translation);
+                }
+                let response = BatchTranslationResponse::new(translations, msg.language, &msg.requester);
+                
+                if let Some(bus) = &*self.bus.read().await {
+                    bus.publish(response).await?;
+                }
             }
         }
         
